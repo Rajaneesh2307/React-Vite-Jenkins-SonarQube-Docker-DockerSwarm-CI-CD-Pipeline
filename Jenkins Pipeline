@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Rajaneesh2307/React-Vite-CI-CD-Project.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('Build React App') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    def scannerHome = tool 'SonarQube Scanner'   
+                    withSonarQubeEnv('SonarQube') {               
+                        sh "${scannerHome}/bin/sonar-scanner"
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate Check') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh '''
+                    docker build -t yembulururajaneesh/react-vite-app:latest .
+                '''
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                    sh '''
+                        docker login -u yembulururajaneesh -p Rajaneesh@07
+                        docker push yembulururajaneesh/react-vite-app:latest
+                    '''
+            }
+        }
+
+        stage('Swarm Deployment') {
+            steps {
+                sh '''
+                    docker stack deploy -c docker-compose.yml react_app_stack
+                '''
+            }
+        }
+    }
+}
