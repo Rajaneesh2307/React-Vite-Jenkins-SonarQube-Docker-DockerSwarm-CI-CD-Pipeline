@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  react_vite_app:
+    image: yembulururajaneesh/react-vite-app:latest
+    ports:
+      - "8081:80"
+    volumes:
+      - myvolume:/usr/share/nginx/logs
+    networks:
+      - mynetwork
+    deploy:
+      replicas: 6
+
+volumes:
+  myvolume:
+
+networks:
+  mynetwork:
+    driver: overlay
